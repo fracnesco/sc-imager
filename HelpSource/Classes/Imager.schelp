@@ -1,0 +1,126 @@
+TITLE:: Imager
+summary:: a stereo imager in up to four bands - width, stereoize and recover per band - as a UGen and as an object, with a window
+categories:: Libraries>Imager
+related:: Classes/FxParamUnit, Classes/ImagerView, Classes/FxDevicePanel, Classes/FxUnit, Classes/FxChain
+
+DESCRIPTION::
+A stereo imager in up to four bands, after iZotope's Ozone Imager: width per band from mono to twice as wide, a stereoize that gives a band a side it did not have, a recover that keeps the weight of what narrowing takes away, and the image and each band's correlation drawn live.
+
+code::
+Ndef(\pad, { Imager.ar(Pan2.ar(Saw.ar([110, 165]).sum * 0.1, LFNoise1.kr(0.3)), \imager) }).play;
+
+p = Imager(Ndef(\pad), \imager);
+p.gui;
+p.bands = '3'; p.split1 = 150; p.split2 = 3000;
+p.width1 = -1;                       // the bass in the middle
+p.width3 = 0.5; p.stereo3 = 0.4;     // the top wider, and given more side
+p.preset = 'mono bass';
+::
+
+A stereo signal is a middle, code::(left + right) / 2::, and a side, code::(left - right) / 2::. code::width:: scales the side: -1 (-100 %) takes it away, 0 leaves it as it came in, 1 doubles it. The middle is never touched by it, so the mono sum stays the same however wide a sound is made: that is the one thing an imager has to get right.
+
+code::bands:: splits the sound into one to four bands at code::split1::, code::split2::, code::split3::, each with its own settings. The splits are Linkwitz-Riley crossovers (two Butterworth filters in a row): the bands add back up flat, with the phase turned around each split. The dry side of code::mix:: is split and summed the same way, so mixing never combs; with one band nothing is split at all. A split under 1.2 times the one before it is taken as 1.2 times it (link::#*splitsOf::).
+
+code::stereo:: gives a band a side made from its own middle: in code::\delay:: mode a copy delayed by code::time::, in code::\diffuse:: mode the middle through four allpasses. Both write the side only, so the mono sum does not change. code::recover:: puts the side a narrowed band lost back into its middle. code::solo:: plays only the soloed bands.
+
+Measured offline, an NRT render per case: one band at -1 leaves left and right equal to 1e-8; stereoize changes the mono sum by under 1e-7; width 1 everywhere raises the side by 6.02 dB; code::mix:: 0.5 at width 0 equals the dry exactly.
+
+On more than two channels it images them in pairs; on one channel there is no image, and the sound passes through. A stereo pair is about 560 UGens.
+
+subsection:: The object and the UGen
+It is an link::Classes/FxParamUnit::, so everything that class documents works here: code::Imager.ar(in, name)::, code::Imager(node, name)::, code::Imager.onBus(bus, numChannels)::, presets, the clipboard, code::gui::. With SuperDirtGUI installed it is an insert, code::~sdg.addInsert(0, \imager)::, listed under utility.
+
+subsection:: The window
+code::p.gui:: opens it, code::p.panel(view):: puts it in a view of yours (an link::Classes/FxDevicePanel::). The display (link::Classes/ImagerView::) is the band plane - each band a column between its splits, its width as a bar up or down from the middle line, the correlation of each band running under it - and the image, the output as dots, in three drawings. Under it, four cards: bands (the count and the splits), width (every band's width at once, each knob in its band's colour), band 1 2 3 4 (stereoize, mode, time, solo of the band shown), output (recover, mix, output). A split not in use, a band past the count, the time outside delay mode and recover with nothing narrowed are dimmed.
+
+subsection:: Parameters
+Each is a property of the object: read it, set it. The numbers are in the order of the node's control, which is what saved node maps carry.
+
+table::
+## strong::parameter:: || strong::range:: || strong::default:: || strong::what it does::
+## code::bands:: || 1 2 3 4 || 4 || how many bands: each split adds one
+## code::split1:: || 20 .. 18000 Hz || 150 || between band 1 and band 2
+## code::split2:: || 20 .. 18000 Hz || 1500 || between band 2 and band 3
+## code::split3:: || 20 .. 18000 Hz || 6000 || between band 3 and band 4
+## code::width1:: || -1 .. 1 || 0 || band 1: -100 is mono, 0 as it came in, +100 the side doubled
+## code::stereo1:: || 0 .. 1 || 0 || band 1: a side made from its own middle - for a sound that has too little to widen
+## code::mode1:: || delay diffuse || diffuse || band 1: how the side is made - a short delay (colourful, combs) or allpasses (smooth)
+## code::time1:: || 0.001 .. 0.04 s || 0.012 || band 1: the delay's length, in delay mode
+## code::solo1:: || on off || false || band 1: hear only the bands that are soloed
+## code::width2:: || -1 .. 1 || 0 || band 2: -100 is mono, 0 as it came in, +100 the side doubled
+## code::stereo2:: || 0 .. 1 || 0 || band 2: a side made from its own middle - for a sound that has too little to widen
+## code::mode2:: || delay diffuse || diffuse || band 2: how the side is made - a short delay (colourful, combs) or allpasses (smooth)
+## code::time2:: || 0.001 .. 0.04 s || 0.012 || band 2: the delay's length, in delay mode
+## code::solo2:: || on off || false || band 2: hear only the bands that are soloed
+## code::width3:: || -1 .. 1 || 0 || band 3: -100 is mono, 0 as it came in, +100 the side doubled
+## code::stereo3:: || 0 .. 1 || 0 || band 3: a side made from its own middle - for a sound that has too little to widen
+## code::mode3:: || delay diffuse || diffuse || band 3: how the side is made - a short delay (colourful, combs) or allpasses (smooth)
+## code::time3:: || 0.001 .. 0.04 s || 0.012 || band 3: the delay's length, in delay mode
+## code::solo3:: || on off || false || band 3: hear only the bands that are soloed
+## code::width4:: || -1 .. 1 || 0 || band 4: -100 is mono, 0 as it came in, +100 the side doubled
+## code::stereo4:: || 0 .. 1 || 0 || band 4: a side made from its own middle - for a sound that has too little to widen
+## code::mode4:: || delay diffuse || diffuse || band 4: how the side is made - a short delay (colourful, combs) or allpasses (smooth)
+## code::time4:: || 0.001 .. 0.04 s || 0.012 || band 4: the delay's length, in delay mode
+## code::solo4:: || on off || false || band 4: hear only the bands that are soloed
+## code::recover:: || 0 .. 1 || 0 || what narrowing takes from the side, put back into the middle: a narrowed band keeps its weight
+## code::mix:: || 0 .. 1 || 1 || how much of the effect goes out, against the dry signal
+## code::output:: || -36 .. 24 dB || 0 || the level of the whole thing, in dB
+::
+
+CLASSMETHODS::
+
+METHOD:: identityColour
+The stereo family's apricot (code::FxPalette.identity(\stereo)::): the stereoize cap, the dots of the image, the name in the header.
+
+METHOD:: bandColour
+A band's colour, low to high, as ParaEQ's handles: violet, teal, lime, gold.
+ARGUMENT:: i
+The band, from 0.
+
+METHOD:: keyColour
+The colour the device panel gives a parameter's knob: a band's width knob wears its band's colour.
+ARGUMENT:: key
+
+METHOD:: numBands
+How many bands the object is set to, 1 to 4.
+ARGUMENT:: unit
+An Imager.
+
+METHOD:: bandOf
+The band a parameter belongs to, from 0, or nil.
+ARGUMENT:: key
+
+METHOD:: splitsOf
+The splits as the graph takes them: each at least 1.2 times the one before.
+ARGUMENT:: s1
+ARGUMENT:: s2
+ARGUMENT:: s3
+RETURNS:: An link::Classes/Array:: of three frequencies.
+
+METHOD:: splits
+link::#*splitsOf:: of an object's settings.
+ARGUMENT:: unit
+
+METHOD:: correlation
+The correlation of left and right worked out from the energies of middle and side, code::(em - es) / (em + es)::: +1 is mono, 0 two unrelated sides, -1 the sides opposite.
+ARGUMENT:: em
+ARGUMENT:: es
+
+METHOD:: scopePoints
+How many points of each side of the output a meter reply carries for the image: 32, caught at even steps through one meter period.
+
+METHOD:: extrasSize
+The length of an object's code::extras:: while its meter is on: per band the energies of middle in, side in, middle out and side out (16), then middle and side of the whole output, then the image's left points and right points.
+
+INSTANCEMETHODS::
+
+EXAMPLES::
+
+code::
+s.boot;
+Ndef(\pad, { Imager.ar(Pan2.ar(Saw.ar([110, 165]).sum * 0.1, LFNoise1.kr(0.3)), \imager) }).play;
+p = Imager(Ndef(\pad), \imager);
+p.gui;
+p.preset = Imager.presetNames.choose;
+p.free; Ndef(\pad).clear;
+::

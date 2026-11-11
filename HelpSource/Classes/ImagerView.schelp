@@ -1,0 +1,71 @@
+TITLE:: ImagerView
+summary:: Imager's display: the bands' widths, their correlations, and the image
+categories:: Libraries>Imager
+related:: Classes/Imager, Classes/FxParamView, Classes/FxDevicePanel
+
+DESCRIPTION::
+What link::Classes/FxDevicePanel:: puts at the top of link::Classes/Imager::'s window, with the meters beside it.
+
+Left, the band plane: frequency along on a log scale, each band a column between its splits, in its colour (violet, teal, lime, gold, low to high). Up from the middle line is wider, down narrower to mono: the band's bar is its code::width::, and an apricot cap over it how much side code::stereo:: adds. The band the panel shows is framed; with a band soloed, the others are drawn faint. Under the bars, each band's correlation, the last five seconds of it: +1 is mono, 0 two unrelated sides, under 0 the sides fight and the band thins out in mono. The number is the correlation now, the dim tick what came in.
+
+Right, the image: the output as dots, middle up and side across, so a mono sound is a vertical line, left at the upper left and right at the upper right. The words over it choose the drawing (code::scopeMode::):
+
+table::
+## code::\dots:: || polar, folded into a half circle: the 45 degree lines are hard left and hard right, and dots past them are out of phase
+## code::\lissajous:: || the dots as they come
+## code::\level:: || the loudest dot in each direction, as rays
+::
+
+Under the image, the correlation of the whole output, -1 to +1.
+
+table::
+## strong::in the display:: || strong::does::
+## click a band || shows its controls in the band card (code::focusAction::)
+## drag a band up and down || its code::width::
+## the wheel on a band || its code::stereo::
+## drag a split line || moves the split
+## click dots, lissajous, level || how the image is drawn
+## shift || fine, a tenth as far
+## double click || back to the default of what is under it
+::
+
+The bars and splits are the settings. The correlations, the dots and the bar under the image are what the server measures (the object's code::extras::, see link::Classes/Imager#*extrasSize::): they move only while the window is running, and the dots show the effect's output before code::mix:: and code::output::.
+
+CLASSMETHODS::
+
+METHOD:: new
+ARGUMENT:: unit
+The link::Classes/Imager::.
+ARGUMENT:: parent
+
+METHOD:: historySize
+How many correlation values are kept per band: 125, five seconds at 25 replies a second.
+
+METHOD:: trail
+How many meter replies of dots stay on screen: 6.
+
+METHOD:: scopeModes
+code::[\dots, \lissajous, \level]::.
+
+METHOD:: fold
+A point of the image, code::[side, middle]::, folded into the upper half: under the middle line it is the same direction, upside down.
+ARGUMENT:: p
+
+INSTANCEMETHODS::
+
+METHOD:: focus
+The band shown, from 0; the panel sets it, and a click in a band sets it back through code::focusAction::.
+
+METHOD:: focusAction
+A Function of the band clicked, from 0.
+
+METHOD:: scopeMode
+How the image is drawn: one of link::#*scopeModes::.
+
+METHOD:: levelsArrived
+Called on every meter reply: keeps the correlations and the dots.
+
+METHOD:: hint
+What is under the pointer, for the hint bar.
+ARGUMENT:: x
+ARGUMENT:: y
