@@ -1,0 +1,11 @@
+(
+	name: "Imager",
+	summary: "a stereo imager in up to four bands - width, stereoize, recover sides - with a vectorscope and correlation per band, as a UGen and as an object, with a window",
+	version: "0.1.0",
+	author: "Francesco Corvi",
+	url: "https://github.com/fracnesco/sc-imager.git",
+	license: "MIT",
+	copyright: "Copyright (c) 2026 Francesco Corvi",
+	schelp: "HelpSource",
+	dependencies: ["https://github.com/fracnesco/sc-fx-kit.git"]
+)
