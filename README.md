@@ -60,7 +60,7 @@ A stereo signal is a **middle** and a **side**: `(left + right) / 2` is what bot
 
 **Stereoize.** Width only scales the side a sound already has: a mono synth stays mono at +100 %. `stereo` gives a band a side made from its own middle - in `delay` mode a copy delayed by `time` (colourful: left and right become two combs that fill each other's gaps, the classic pseudo-stereo), in `diffuse` mode the middle through a chain of allpasses (smoother, no single comb). Both only ever write to the side, so the mono sum is left exactly as it was.
 
-**Recover.** Narrowing throws side away, and with it some of a band's power. `recover` puts what a band lost back into its middle, so a bass brought to mono keeps its weight. It only does anything while a band is narrowed.
+**Recover.** Narrowing throws side away, and with it some of a band's power. `recover` turns its middle up by the power the band lost (a gain, never the side itself, so left and right stay balanced), so a bass brought to mono keeps its weight. It only does anything while a band is narrowed.
 
 **Solo** a band to hear it alone; several soloed bands play together.
 
@@ -130,7 +130,7 @@ Every parameter is a property: `p.width1`, `p.width1 = ...`. These also work by 
 | `mode4` | band 4 | delay diffuse | diffuse | band 4: how the side is made - a short delay (colourful, combs) or allpasses (smooth) |
 | `time4` | band 4 | 0.001 .. 0.04 s | 0.012 | band 4: the delay's length, in delay mode |
 | `solo4` | band 4 | on off | false | band 4: hear only the bands that are soloed |
-| `recover` | output | 0 .. 1 | 0 | what narrowing takes from the side, put back into the middle: a narrowed band keeps its weight |
+| `recover` | output | 0 .. 1 | 0 | the power narrowing takes from the side, made up as a gain on the middle: a narrowed band keeps its weight |
 | `mix` | output | 0 .. 1 | 1 | how much of the effect goes out, against the dry signal |
 | `output` | output | -36 .. 24 dB | 0 | the level of the whole thing, in dB |
 

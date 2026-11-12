@@ -21,7 +21,7 @@ A stereo signal is a middle, code::(left + right) / 2::, and a side, code::(left
 
 code::bands:: splits the sound into one to four bands at code::split1::, code::split2::, code::split3::, each with its own settings. The splits are Linkwitz-Riley crossovers (two Butterworth filters in a row): the bands add back up flat, with the phase turned around each split. The dry side of code::mix:: is split and summed the same way, so mixing never combs; with one band nothing is split at all. A split under 1.2 times the one before it is taken as 1.2 times it (link::#*splitsOf::).
 
-code::stereo:: gives a band a side made from its own middle: in code::\delay:: mode a copy delayed by code::time::, in code::\diffuse:: mode the middle through four allpasses. Both write the side only, so the mono sum does not change. code::recover:: puts the side a narrowed band lost back into its middle. code::solo:: plays only the soloed bands.
+code::stereo:: gives a band a side made from its own middle: in code::\delay:: mode a copy delayed by code::time::, in code::\diffuse:: mode the middle through four allpasses. Both write the side only, so the mono sum does not change. code::recover:: turns a narrowed band's middle up by the power its side lost (a gain, never the side itself), so the band keeps its loudness. code::solo:: plays only the soloed bands.
 
 Measured offline, an NRT render per case: one band at -1 leaves left and right equal to 1e-8; stereoize changes the mono sum by under 1e-7; width 1 everywhere raises the side by 6.02 dB; code::mix:: 0.5 at width 0 equals the dry exactly.
 
@@ -62,7 +62,7 @@ table::
 ## code::mode4:: || delay diffuse || diffuse || band 4: how the side is made - a short delay (colourful, combs) or allpasses (smooth)
 ## code::time4:: || 0.001 .. 0.04 s || 0.012 || band 4: the delay's length, in delay mode
 ## code::solo4:: || on off || false || band 4: hear only the bands that are soloed
-## code::recover:: || 0 .. 1 || 0 || what narrowing takes from the side, put back into the middle: a narrowed band keeps its weight
+## code::recover:: || 0 .. 1 || 0 || the power narrowing takes from the side, made up as a gain on the middle: a narrowed band keeps its weight
 ## code::mix:: || 0 .. 1 || 1 || how much of the effect goes out, against the dry signal
 ## code::output:: || -36 .. 24 dB || 0 || the level of the whole thing, in dB
 ::

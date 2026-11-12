@@ -9,7 +9,7 @@
 // have, made from its own middle - a short delay (`mode` delay, colourful) or
 // a chain of allpasses (`mode` diffuse, smoother). Both only ever write the
 // side, so the mono sum (left + right) never changes. Narrowing throws side
-// away; `recover` puts what a band lost back into the middle, so a narrowed
+// away; `recover` turns the middle up by the power a band lost, so a narrowed
 // bass keeps its weight.
 //
 //   Ndef(\pad, { Imager.ar(Pan2.ar(Saw.ar([110, 165]).sum * 0.1, LFNoise1.kr(0.3)), \imager) }).play;
@@ -76,7 +76,7 @@ Imager : FxParamUnit {
 				"between band 3 and band 4", section: \bands, dec: 0, size: \small),
 			4.collect(band),
 			this.knob(\recover, 0, 1, \lin, 0, "", "recover",
-				"what narrowing takes from the side, put back into the middle: a narrowed band keeps its weight",
+				"the power narrowing takes from the side, made up as a gain on the middle: a narrowed band keeps its weight",
 				box: \pct, section: \output),
 			this.mixParams(\output, 1)
 		]
@@ -198,8 +198,23 @@ Imager : FxParamUnit {
 	// one band's middle and side, imaged: [mid, side]
 	*prBand { |mid, side, src, w, a, mode, time, recover, gate, i|
 		var newSide = (side * (1 + w)) + (this.prStereoize(src, mode, time, i) * a);
-		var newMid = mid + (side * w.neg.max(0) * recover);
-		^[newMid * gate, newSide * gate]
+		^[this.prRecover(mid, side, newSide, w, recover) * gate, newSide * gate]
+	}
+
+	// recover: the power narrowing takes from the side, made up by turning the
+	// middle up, so the band keeps its loudness. Levels only: no side signal
+	// goes into the middle, so a hard-left sound and a hard-right one come out
+	// alike. Lost is the side that came in less the side that goes out, so a
+	// band narrowed and stereoized at once is not made up twice. The powers go
+	// through two lags of 43 ms each (Lag2's 0.3 s is the 60 dB time): one lag
+	// of 0.08 s (11.6 ms) let the square's ripple at twice a bass note through,
+	// and the gain beat the middle with it. At most +6 dB; only while narrowed
+	*prRecover { |mid, side, newSide, w, recover|
+		var pm = Lag2.ar(mid.squared, 0.3), ps = Lag2.ar(side.squared, 0.3);
+		var psNew = Lag2.ar(newSide.squared, 0.3);
+		var lost = (ps - psNew).max(0) * (w < 0);
+		var g = ((pm + lost + 1e-12) / (pm + 1e-12)).sqrt.min(2);
+		^mid * (1 + ((g - 1) * recover.clip(0, 1)))
 	}
 
 	*prPair { |l, r, p, wantExtras|
